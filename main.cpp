@@ -22,18 +22,38 @@
 #define USERAGENT "HTMLGET 1.1"
 
 int tmpres;
+//=================================================================================================================
 
-char *build_get_query(char *host, char *page);
-//======================================================================================================================
+char *build_get_query(char *host, char *page)
+{
+    char *query;
+    char *getpage = page;
+
+    std::string input = "GET /%s HTTP/1.1\r\nHost: %s\r\nUser-Agent: %s\r\n\r\n";
+    char *tpl = new char[input.length() + 1];
+    strcpy(tpl, input.c_str());
+
+    if(getpage[0] == '/'){
+        getpage = getpage + 1;
+        fprintf(stderr,"Removing leading \"/\", converting %s to %s\n", page, getpage);
+    }
+    // -5 is to consider the %s %s %s in tpl and the ending \0
+    query = (char *)malloc(strlen(host)+strlen(getpage)+strlen(USERAGENT)+strlen(tpl)-5);
+    sprintf(query, tpl, getpage, host, USERAGENT);
+    return query;
+}
+
+//=================================================================================================================
+
 int main(int argc, char *argv[]) {
     int sockfd, ret;
     struct addrinfo ai_hints;
     struct addrinfo *ai_results, *j;
 
-    //==========================================================================
+    //=============================================================================================================
     /* Get url and parse it*/
     std::string URL = argv[1];
-    
+
     std::string url_prefix;
     std::string host;
     std::string port;
@@ -42,7 +62,7 @@ int main(int argc, char *argv[]) {
     //Get URL Prefix
     unsigned int i = 0;
     for (i = 0; i < URL.length(); ++i) {
-        
+
         if ((URL[i] == '/') && (URL[i + 1] == '/')) {
             i = i + 2;
             break;
@@ -53,7 +73,7 @@ int main(int argc, char *argv[]) {
             break;
         }
         if (URL[i] != ':') {
-           url_prefix += URL[i]; 
+           url_prefix += URL[i];
         }
     }
 
@@ -89,7 +109,7 @@ int main(int argc, char *argv[]) {
     if (port.length() == 0 && url_prefix == "http") {
         port = "80";
     }
-    
+
     else if (port.length() == 0 && url_prefix == "https") {
         port = "443";
     }
@@ -98,7 +118,7 @@ int main(int argc, char *argv[]) {
     std::cout << "HOST: \t\t" << host << "\n";
     std::cout << "PORT: \t\t" << port << "\n";
     std::cout << "PATH: \t\t" << path << "\n\n\n";
-    //==========================================================================
+    //=============================================================================================================
     memset(&ai_hints, 0, sizeof(ai_hints));
     ai_hints.ai_family = AF_UNSPEC;
     ai_hints.ai_socktype = SOCK_STREAM;
@@ -178,29 +198,7 @@ int main(int argc, char *argv[]) {
         perror("Error receiving data");
     }
 
-
-    //free(get);
-    //close(sockfd);
     exit(0);
-
-}
-//======================================================================================================================
-char *build_get_query(char *host, char *page)
-{
-    char *query;
-    char *getpage = page;
-
-    std::string input = "GET /%s HTTP/1.1\r\nHost: %s\r\nUser-Agent: %s\r\n\r\n";
-    char *tpl = new char[input.length() + 1];
-    strcpy(tpl, input.c_str());
-
-    if(getpage[0] == '/'){
-        getpage = getpage + 1;
-        fprintf(stderr,"Removing leading \"/\", converting %s to %s\n", page, getpage);
-    }
-    // -5 is to consider the %s %s %s in tpl and the ending \0
-    query = (char *)malloc(strlen(host)+strlen(getpage)+strlen(USERAGENT)+strlen(tpl)-5);
-    sprintf(query, tpl, getpage, host, USERAGENT);
-    return query;
 }
 
+//=================================================================================================================
